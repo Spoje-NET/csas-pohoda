@@ -1,0 +1,19 @@
+Package: csas-pohoda
+Version: 0.1.0
+Architecture: all
+Maintainer: Vítězslav Dvořák <info@vitexsoftware.cz>
+Installed-Size: 18
+Depends: python3, python3-csas-statement-tools, python3-pohoda-abo-importer
+Section: unknown
+Priority: optional
+Multi-Arch: foreign
+Homepage: https://github.com/Spoje-NET/csas-pohoda
+Description: CSAS Statement to Pohoda Importer
+ Automates downloading bank statements from Česká spořitelna (CSAS) and imports them into Pohoda accounting software.
+ .
+ Features:
+ * Download CSAS statements using csas-statement-tools
+ * Import statements into Pohoda using pohoda-abo-importer
+ * Command-line interface for easy automation
+ * Error handling and logging
+ * Unit tests included

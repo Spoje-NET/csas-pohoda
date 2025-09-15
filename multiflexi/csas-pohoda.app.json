@@ -1,0 +1,64 @@
+{
+	"name": "CSAS Statement to Pohoda Importer",
+	"description": "Automates downloading bank statements from Česká spořitelna (CSAS) and imports them into Pohoda accounting software.",
+	"executable": "/usr/bin/statement_sync.py",
+	"version": "0.1.0",
+	"homepage": "https://github.com/Spoje-NET/csas-pohoda",
+	"topics": ["banking", "accounting", "automation", "CSAS", "Pohoda"],
+	"requirements": ["python3", "csas-statement-tools", "pohoda-abo-importer"],
+	"environment": {
+		"FROM_DATE": {
+			"type": "string",
+			"description": "Start date in YYYY-MM-DD format.",
+			"required": true,
+			"hint": "e.g. 2025-09-01"
+		},
+		"TO_DATE": {
+			"type": "string",
+			"description": "End date in YYYY-MM-DD format.",
+			"required": true,
+			"hint": "e.g. 2025-09-15"
+		},
+		"OUTPUT_DIR": {
+			"type": "string",
+			"description": "Directory to save downloaded statements.",
+			"defval": "statements",
+			"required": false,
+			"hint": "e.g. /tmp/statements"
+		},
+		"POHODA_URL": {
+			"type": "string",
+			"description": "Pohoda API URL.",
+			"required": true,
+			"hint": "e.g. http://localhost:8000/api"
+		},
+		"POHODA_TOKEN": {
+			"type": "string",
+			"description": "Pohoda API token.",
+			"required": true,
+			"hint": "Your Pohoda API token"
+		}
+	},
+	"artifacts": [
+		{
+			"name": "statement_file",
+			"path": "${OUTPUT_DIR}/statement.abo",
+			"type": "file",
+			"description": "Downloaded bank statement file in ABO format."
+		}
+	],
+	"produces": {
+		"imported_statement": {
+			"description": "Statement imported into Pohoda.",
+			"patterns": ["*.abo"],
+			"format": "file"
+		}
+	},
+	"consumes": {
+		"statement_file": {
+			"description": "Bank statement file to be imported.",
+			"format": "file",
+			"required": true
+		}
+	}
+}
