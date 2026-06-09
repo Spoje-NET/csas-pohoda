@@ -1,123 +1,138 @@
 {
-    "$schema": "https://raw.githubusercontent.com/VitexSoftware/php-vitexsoftware-multiflexi-core/refs/heads/main/multiflexi.app.schema.json",
-    "schemaVersion": "3.0.0",
-    "name": {
-        "en": "CSAS Statement to Pohoda Importer",
-        "cs": "CSAS Statement to Pohoda Importer"
-    },
-    "description": {
-        "en": "Automates downloading bank statements from Česká spořitelna (CSAS) and imports them into Pohoda accounting software.",
-        "cs": "Automates downloading bank statements z Česká spořitelna (CSAS) and imports them into Pohoda accounting software."
-    },
-    "version": "0.1.0",
-    "tags": [
-        "banking",
-        "accounting",
-        "automation",
-        "CSAS",
-        "Pohoda"
-    ],
-    "homepage": "https://github.com/Spoje-NET/csas-pohoda",
-    "executable": "/usr/bin/statement_sync.py",
-    "environment": {
-        "FROM_DATE": {
-            "type": "string",
-            "description": {
-                "en": "Start date in YYYY-MM-DD format.",
-                "cs": "Start date in YYYY-MM-DD format."
-            },
-            "required": true,
-            "hint": {
-                "en": "e.g. 2025-09-01",
-                "cs": "e.g. 2025-09-01"
-            },
-            "category": "Other"
-        },
-        "TO_DATE": {
-            "type": "string",
-            "description": {
-                "en": "End date in YYYY-MM-DD format.",
-                "cs": "End date in YYYY-MM-DD format."
-            },
-            "required": true,
-            "hint": {
-                "en": "e.g. 2025-09-15",
-                "cs": "e.g. 2025-09-15"
-            },
-            "category": "Other"
-        },
-        "OUTPUT_DIR": {
-            "type": "string",
-            "description": {
-                "en": "Directory to save downloaded statements.",
-                "cs": "Directory to save downloaded statements."
-            },
-            "defval": "statements",
-            "required": false,
-            "hint": {
-                "en": "e.g. /tmp/statements",
-                "cs": "e.g. /tmp/statements"
-            },
-            "category": "Other"
-        },
-        "POHODA_URL": {
-            "type": "string",
-            "description": {
-                "en": "Pohoda API URL.",
-                "cs": "Pohoda API URL."
-            },
-            "required": true,
-            "hint": {
-                "en": "e.g. http://localhost:8000/api",
-                "cs": "e.g. http://localhost:8000/api"
-            },
-            "category": "API"
-        },
-        "POHODA_TOKEN": {
-            "type": "string",
-            "description": {
-                "en": "Pohoda API token.",
-                "cs": "Pohoda API token."
-            },
-            "required": true,
-            "hint": {
-                "en": "Your Pohoda API token",
-                "cs": "Your Pohoda API token"
-            },
-            "category": "API"
-        }
-    },
-    "produces": {
-        "imported_statement": {
-            "description": {
-                "en": "Statement imported into Pohoda.",
-                "cs": "Statement imported into Pohoda."
-            },
-            "patterns": [
-                "*.abo"
-            ],
-            "format": "file"
-        }
-    },
+  "$schema": "https://raw.githubusercontent.com/VitexSoftware/php-vitexsoftware-multiflexi-core/refs/heads/main/multiflexi.app.schema.json",
+  "schemaVersion": "3.4.0",
+  "name": {
+    "en": "CSAS Statement to Pohoda Importer",
+    "cs": "CSAS Statement to Pohoda Importer"
+  },
+  "description": {
+    "en": "Automates downloading bank statements from Česká spořitelna (CSAS) and imports them into Pohoda accounting software.",
+    "cs": "Automates downloading bank statements z Česká spořitelna (CSAS) and imports them into Pohoda accounting software."
+  },
+  "version": "0.1.0",
+  "tags": [
+    "banking",
+    "accounting",
+    "automation",
+    "CSAS",
+    "Pohoda"
+  ],
+  "homepage": "https://github.com/Spoje-NET/csas-pohoda",
+  "executable": "/usr/bin/statement_sync.py",
+  "events": {
     "consumes": {
-        "statement_file": {
-            "description": {
-                "en": "Bank statement file to be imported.",
-                "cs": "Bank statement file to be imported."
-            },
-            "format": "file",
-            "required": true
-        }
+      "bank.statement.downloaded": {
+        "description": "A bank statement file was downloaded",
+        "format": "file"
+      }
     },
-    "artifacts": [
-        {
-            "name": "statement_file",
-            "path": "${OUTPUT_DIR}/statement.abo",
-            "type": "file",
-            "description": {
-                "en": "Downloaded bank statement file in ABO format.",
-                "cs": "Downloaded bank statement file in ABO format."
-            }
-        }
-    ]
+    "emits": {
+      "bank.statement.imported": {
+        "description": "A bank statement was imported into the accounting system",
+        "evidence": "banka",
+        "operation": "create"
+      }
+    }
+  },
+  "environment": {
+    "FROM_DATE": {
+      "type": "string",
+      "description": {
+        "en": "Start date in YYYY-MM-DD format.",
+        "cs": "Start date in YYYY-MM-DD format."
+      },
+      "required": true,
+      "hint": {
+        "en": "e.g. 2025-09-01",
+        "cs": "e.g. 2025-09-01"
+      },
+      "category": "Other"
+    },
+    "TO_DATE": {
+      "type": "string",
+      "description": {
+        "en": "End date in YYYY-MM-DD format.",
+        "cs": "End date in YYYY-MM-DD format."
+      },
+      "required": true,
+      "hint": {
+        "en": "e.g. 2025-09-15",
+        "cs": "e.g. 2025-09-15"
+      },
+      "category": "Other"
+    },
+    "OUTPUT_DIR": {
+      "type": "string",
+      "description": {
+        "en": "Directory to save downloaded statements.",
+        "cs": "Directory to save downloaded statements."
+      },
+      "defval": "statements",
+      "required": false,
+      "hint": {
+        "en": "e.g. /tmp/statements",
+        "cs": "e.g. /tmp/statements"
+      },
+      "category": "Other"
+    },
+    "POHODA_URL": {
+      "type": "string",
+      "description": {
+        "en": "Pohoda API URL.",
+        "cs": "Pohoda API URL."
+      },
+      "required": true,
+      "hint": {
+        "en": "e.g. http://localhost:8000/api",
+        "cs": "e.g. http://localhost:8000/api"
+      },
+      "category": "API"
+    },
+    "POHODA_TOKEN": {
+      "type": "string",
+      "description": {
+        "en": "Pohoda API token.",
+        "cs": "Pohoda API token."
+      },
+      "required": true,
+      "hint": {
+        "en": "Your Pohoda API token",
+        "cs": "Your Pohoda API token"
+      },
+      "category": "API"
+    }
+  },
+  "produces": {
+    "imported_statement": {
+      "description": {
+        "en": "Statement imported into Pohoda.",
+        "cs": "Statement imported into Pohoda."
+      },
+      "patterns": [
+        "*.abo"
+      ],
+      "format": "file"
+    }
+  },
+  "consumes": {
+    "statement_file": {
+      "description": {
+        "en": "Bank statement file to be imported.",
+        "cs": "Bank statement file to be imported."
+      },
+      "format": "file",
+      "required": true
+    }
+  },
+  "artifacts": [
+    {
+      "name": "statement_file",
+      "path": "${OUTPUT_DIR}/statement.abo",
+      "type": "file",
+      "description": {
+        "en": "Downloaded bank statement file in ABO format.",
+        "cs": "Downloaded bank statement file in ABO format."
+      }
+    }
+  ]
 }
