@@ -1,4 +1,4 @@
-# WARP.md
+# AGENTS.md
 
 This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
@@ -35,8 +35,11 @@ python -m unittest discover tests -v
 ### Token Management
 ```bash
 # Refresh CSAS access token (requires csas-statement-tools)
+# IMPORTANT: CSAS access tokens expire after 5 minutes!
 make token
 ```
+
+**CRITICAL TOKEN EXPIRATION NOTICE**: CSAS access tokens have a very short lifespan of only **5 minutes**. Always run `make token` immediately before executing the statement downloader or running any CSAS operations. The token refresh command shows the expiration time - make sure to complete all operations before that time.
 
 ### Docker Operations
 ```bash
