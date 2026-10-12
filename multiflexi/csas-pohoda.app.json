@@ -1,15 +1,16 @@
 {
   "$schema": "https://raw.githubusercontent.com/VitexSoftware/php-vitexsoftware-multiflexi-core/refs/heads/main/multiflexi.app.schema.json",
   "schemaVersion": "3.4.0",
+  "uuid": "5b9d6c3e-7a41-4c1e-9f6b-2d8e0a1c4f37",
   "name": {
     "en": "CSAS Statement to Pohoda Importer",
-    "cs": "CSAS Statement to Pohoda Importer"
+    "cs": "Import výpisů ČS do Pohody"
   },
   "description": {
-    "en": "Automates downloading bank statements from Česká spořitelna (CSAS) and imports them into Pohoda accounting software.",
-    "cs": "Automates downloading bank statements z Česká spořitelna (CSAS) and imports them into Pohoda accounting software."
+    "en": "Downloads bank statements from Česká spořitelna (CSAS) in ABO format and imports the bank movements into Pohoda via mServer.",
+    "cs": "Stáhne bankovní výpisy z České spořitelny ve formátu ABO a naimportuje bankovní pohyby do Pohody přes mServer."
   },
-  "version": "0.1.0",
+  "version": "#VERSION#",
   "tags": [
     "banking",
     "accounting",
@@ -18,14 +19,12 @@
     "Pohoda"
   ],
   "homepage": "https://github.com/Spoje-NET/csas-pohoda",
-  "executable": "/usr/bin/statement_sync.py",
+  "executable": "/usr/bin/csas-pohoda",
+  "requirements": [
+    "Csas",
+    "mserver"
+  ],
   "events": {
-    "consumes": {
-      "bank.statement.downloaded": {
-        "description": "A bank statement file was downloaded",
-        "format": "file"
-      }
-    },
     "emits": {
       "bank.statement.imported": {
         "description": "A bank statement was imported into the accounting system",
@@ -34,105 +33,106 @@
       }
     }
   },
+  "produces": {
+    "report": {
+      "type": "json",
+      "description": {
+        "en": "Result of the download and the import",
+        "cs": "Výsledek stažení a importu"
+      },
+      "schema": "https://raw.githubusercontent.com/VitexSoftware/php-vitexsoftware-multiflexi-core/refs/heads/main/multiflexi.report.schema.json"
+    }
+  },
   "environment": {
     "FROM_DATE": {
       "type": "string",
       "description": {
-        "en": "Start date in YYYY-MM-DD format.",
-        "cs": "Start date in YYYY-MM-DD format."
+        "en": "Start date YYYY-MM-DD (together with TO_DATE)",
+        "cs": "Počáteční datum YYYY-MM-DD (spolu s TO_DATE)"
       },
-      "required": true,
-      "hint": {
-        "en": "e.g. 2025-09-01",
-        "cs": "e.g. 2025-09-01"
-      },
-      "category": "Other"
+      "required": false,
+      "category": "Other",
+      "hint": "2025-09-01"
     },
     "TO_DATE": {
       "type": "string",
       "description": {
-        "en": "End date in YYYY-MM-DD format.",
-        "cs": "End date in YYYY-MM-DD format."
+        "en": "End date YYYY-MM-DD (together with FROM_DATE)",
+        "cs": "Koncové datum YYYY-MM-DD (spolu s FROM_DATE)"
       },
-      "required": true,
-      "hint": {
-        "en": "e.g. 2025-09-15",
-        "cs": "e.g. 2025-09-15"
+      "required": false,
+      "category": "Other",
+      "hint": "2025-09-30"
+    },
+    "CSAS_STATEMENT_SCOPE": {
+      "type": "string",
+      "description": {
+        "en": "Symbolic period used when no dates are given: today, yesterday, last_week, last_month, current_month ...",
+        "cs": "Symbolické období, pokud nejsou zadána data"
       },
-      "category": "Other"
+      "required": false,
+      "category": "Other",
+      "defval": "last_month"
     },
     "OUTPUT_DIR": {
       "type": "string",
       "description": {
-        "en": "Directory to save downloaded statements.",
-        "cs": "Directory to save downloaded statements."
+        "en": "Directory where the downloaded statements are saved",
+        "cs": "Adresář pro stažené výpisy"
       },
-      "defval": "statements",
       "required": false,
-      "hint": {
-        "en": "e.g. /tmp/statements",
-        "cs": "e.g. /tmp/statements"
-      },
-      "category": "Other"
+      "category": "Other",
+      "defval": "/var/tmp/csas-pohoda"
     },
-    "POHODA_URL": {
+    "POHODA_BANK_IDS": {
       "type": "string",
       "description": {
-        "en": "Pohoda API URL.",
-        "cs": "Pohoda API URL."
+        "en": "Bank account identifier (ID) of the CSAS account in Pohoda",
+        "cs": "Zkratka bankovního účtu ČS v Pohodě"
       },
       "required": true,
-      "hint": {
-        "en": "e.g. http://localhost:8000/api",
-        "cs": "e.g. http://localhost:8000/api"
-      },
-      "category": "API"
+      "category": "Other",
+      "hint": "CS"
     },
-    "POHODA_TOKEN": {
+    "POHODA_TIMEOUT": {
+      "type": "number",
+      "description": {
+        "en": "mServer connection timeout in seconds",
+        "cs": "Timeout spojení s mServerem v sekundách"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": "60"
+    },
+    "POHODA_DEBUG": {
+      "type": "bool",
+      "description": {
+        "en": "Enable mServer debug output",
+        "cs": "Ladicí výstup mServeru"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": "false"
+    },
+    "RESULT_FILE": {
       "type": "string",
       "description": {
-        "en": "Pohoda API token.",
-        "cs": "Pohoda API token."
+        "en": "Write the JSON report to this file",
+        "cs": "Soubor pro JSON report"
       },
-      "required": true,
-      "hint": {
-        "en": "Your Pohoda API token",
-        "cs": "Your Pohoda API token"
-      },
-      "category": "API"
-    }
-  },
-  "produces": {
-    "imported_statement": {
+      "required": false,
+      "category": "Other",
+      "defval": "csas_pohoda.json"
+    },
+    "EASE_LOGGER": {
+      "type": "string",
       "description": {
-        "en": "Statement imported into Pohoda.",
-        "cs": "Statement imported into Pohoda."
+        "en": "Log destinations: console|syslog",
+        "cs": "Cíle logu: console|syslog"
       },
-      "patterns": [
-        "*.abo"
-      ],
-      "format": "file"
+      "required": false,
+      "category": "Other",
+      "defval": "console|syslog"
     }
-  },
-  "consumes": {
-    "statement_file": {
-      "description": {
-        "en": "Bank statement file to be imported.",
-        "cs": "Bank statement file to be imported."
-      },
-      "format": "file",
-      "required": true
-    }
-  },
-  "artifacts": [
-    {
-      "name": "statement_file",
-      "path": "${OUTPUT_DIR}/statement.abo",
-      "type": "file",
-      "description": {
-        "en": "Downloaded bank statement file in ABO format.",
-        "cs": "Downloaded bank statement file in ABO format."
-      }
-    }
-  ]
+  }
 }

@@ -1,19 +1,30 @@
 [project]
 name = "csas-pohoda"
-version = "0.1.0"
-description = ""
+version = "0.2.0"
+description = "Automates downloading bank statements from CSAS and imports them into Pohoda accounting software"
 authors = [
-    {name = "CyberVitexus",email = "info@vitexsoftware.cz"}
+    {name = "Vítězslav Dvořák", email = "info@vitexsoftware.cz"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["banking", "accounting", "automation", "CSAS", "Pohoda"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Accounting"
 ]
+dependencies = []
 
-[tool.poetry]
-packages = [{include = "csas_pohoda", from = "src"}]
-
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+Homepage = "https://github.com/Spoje-NET/csas-pohoda"
+Repository = "https://github.com/Spoje-NET/csas-pohoda"
+Issues = "https://github.com/Spoje-NET/csas-pohoda/issues"

@@ -1,4 +1,6 @@
 # CSAS Statement to Pohoda Importer
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Packaging: deb](https://img.shields.io/badge/packaging-.deb-red?logo=debian&logoColor=white)
 
 This project provides a Python script to automate the process of downloading bank statements from Česká spořitelna (CSAS) and importing them into Pohoda accounting software.
 
@@ -13,46 +15,52 @@ This project provides a Python script to automate the process of downloading ban
 ## Requirements
 
 - Python 3.8+
-- `csas-statement-tools` System package
-- `pohoda-abo-importer` System package
-
-## Installation
-
-Install dependencies using pip:
+- `csas-statement-tools` (downloads statements in the ABO format)
+- `pohoda-abo-importer` (creates the bank movements in Pohoda through mServer)
 
 ```bash
-pip install csas-statement-tools pohoda-abo-importer
+sudo apt install csas-pohoda            # command line
+sudo apt install multiflexi-csas-pohoda # MultiFlexi application
 ```
 
 ## Usage
 
-Run the script to download statements and import them into Pohoda:
+All configuration comes from the environment (MultiFlexi credentials *Csas* and *mServer* provide it):
+
+| Variable | Meaning |
+|---|---|
+| `CSAS_API_KEY`, `CSAS_ACCESS_TOKEN` | CSAS API access (the access token lives only 5 minutes, MultiFlexi renews it before every job) |
+| `CSAS_ACCOUNT_IBAN` or `CSAS_ACCOUNT_UUID` | the account to download |
+| `POHODA_URL`, `POHODA_USERNAME`, `POHODA_PASSWORD`, `POHODA_ICO` | Pohoda mServer |
+| `POHODA_BANK_IDS` | ID (abbreviation) of the bank account in Pohoda |
+| `FROM_DATE`, `TO_DATE` | period `YYYY-MM-DD` |
+| `CSAS_STATEMENT_SCOPE` | symbolic period when no dates are given (default `last_month`) |
+| `OUTPUT_DIR`, `RESULT_FILE` | where to save statements and the JSON report |
 
 ```bash
-python src/statement_sync.py --from-date YYYY-MM-DD --to-date YYYY-MM-DD --output-dir /path/to/output --pohoda-url URL --pohoda-token TOKEN
+csas-pohoda --from-date 2025-09-01 --to-date 2025-09-30 -e /path/to/.env
+csas-pohoda --scope yesterday
 ```
 
-### Arguments
-
-- `--from-date` Start date in `YYYY-MM-DD` format (required)
-- `--to-date` End date in `YYYY-MM-DD` format (required)
-- `--output-dir` Directory to save downloaded statements (default: `statements`)
-- `--pohoda-url` Pohoda API URL (required)
-- `--pohoda-token` Pohoda API token (required)
+The JSON report contains the downloaded files and the import report of `pohoda-abo-importer`.
+Exit codes: `0` success (also when the bank has no statement for the period), `1` download failed, `2` import failed.
+Importing the same statement again is safe, already imported movements are skipped.
 
 ## Testing
 
 Run unit tests with:
 
 ```bash
-python -m unittest discover tests
+python3 -m unittest discover tests
 ```
 
 ## Project Structure
 
 ```
-src/statement_sync.py        # Main script
-tests/test_statement_sync.py # Unit tests
+bin/csas-pohoda              # command (wrapper)
+src/statement_sync.py        # download + import logic
+tests/test_statement_sync.py # unit tests
+multiflexi/                  # MultiFlexi application definition
 ```
 
 ## License

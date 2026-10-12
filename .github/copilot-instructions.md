@@ -35,3 +35,9 @@ When create new class or update existing class, always create or update its unit
 All files in the multiflexi/*.app.json directory must conform to the schema available at: https://raw.githubusercontent.com/VitexSoftware/php-vitexsoftware-multiflexi-core/refs/heads/main/multiflexi.app.schema.json
 
 All produced reports must conform to the schema available at: https://raw.githubusercontent.com/VitexSoftware/php-vitexsoftware-multiflexi-core/refs/heads/main/multiflexi.report.schema.json
+
+## CSAS Token Management
+
+**CRITICAL**: CSAS access tokens expire after only 5 minutes. Always run `make token` immediately before any CSAS operations. Monitor token expiration times and ensure all operations complete within the 5-minute window. This is a hard limitation of the CSAS API that cannot be extended.
+
+After every single edit to a PHP file, always run `php -l` on the edited file to lint it and ensure code sanity before proceeding further. This is mandatory for all PHP code changes.

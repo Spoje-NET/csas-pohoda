@@ -1,1 +1,2 @@
-src/statement_sync.py usr/bin/statement_sync.py
+bin/csas-pohoda usr/bin
+src/statement_sync.py usr/lib/csas-pohoda

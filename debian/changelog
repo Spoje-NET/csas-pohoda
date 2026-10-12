@@ -1,6 +1,10 @@
-csas-pohoda (0.1.0) UNRELEASED; urgency=low
+csas-pohoda (0.2.0) unstable; urgency=medium
 
-  * Initial release. Closes: #nnnn
-    <nnnn is the bug number of your ITP>
+  * Rewritten statement_sync: configuration from the environment, date range
+    or symbolic period, installed tools instead of hardcoded paths
+  * Command csas-pohoda, exit codes 1 (download) and 2 (import failed)
+  * New package multiflexi-csas-pohoda with the application definition
+    (Csas and mServer credentials)
+  * Depends on csas-statement-tools and pohoda-abo-importer
 
- -- Vítězslav Dvořák <info@vitexsoftware.cz>  Mon, 15 Sep 2025 23:04:19 +0200
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Mon, 12 Oct 2026 16:26:55 +0200

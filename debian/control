@@ -1,13 +1,12 @@
 Source: csas-pohoda
-Section: unknown
+Section: utils
 Priority: optional
 Maintainer: Vítězslav Dvořák <info@vitexsoftware.cz>
-Build-Depends:
- debhelper-compat (= 13),
+Build-Depends: debhelper-compat (= 13), jq
 Standards-Version: 4.7.0
 Homepage: https://github.com/Spoje-NET/csas-pohoda
 Rules-Requires-Root: no
-Vcs-Git: git@github.com:Spoje-NET/csas-pohoda.git
+Vcs-Git: https://github.com/Spoje-NET/csas-pohoda.git
 Vcs-Browser: https://github.com/Spoje-NET/csas-pohoda
 
 Package: csas-pohoda
@@ -16,14 +15,23 @@ Multi-Arch: foreign
 Depends:
  ${misc:Depends},
  python3,
- python3-csas-statement-tools,
- python3-pohoda-abo-importer,
-Description: CSAS Statement to Pohoda Importer
- Automates downloading bank statements from Česká spořitelna (CSAS) and imports them into Pohoda accounting software.
+ csas-statement-tools (>= 0.1.4),
+ pohoda-abo-importer (>= 1.0.1)
+Description: Import Česká spořitelna statements into Pohoda
+ Downloads bank statements from Česká spořitelna (CSAS) in the ABO format
+ using csas-statement-downloader and imports the bank movements into the
+ Pohoda accounting software through mServer using pohoda-abo-importer.
  .
- Features:
-	* Download CSAS statements using csas-statement-tools
-	* Import statements into Pohoda using pohoda-abo-importer
-	* Command-line interface for easy automation
-	* Error handling and logging
-	* Unit tests included
+ The import is idempotent, already imported movements are skipped.
+
+Package: multiflexi-csas-pohoda
+Architecture: all
+Depends:
+ ${misc:Depends},
+ csas-pohoda (= ${binary:Version}),
+ multiflexi-cli,
+ multiflexi-csas,
+ multiflexi-mserver
+Description: MultiFlexi integration of csas-pohoda
+ MultiFlexi application definition which runs the import of Česká spořitelna
+ statements into Pohoda with the Csas and mServer credentials.

@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ]; then
+    for file in /usr/lib/csas-pohoda/multiflexi/*.json; do
+        multiflexi-cli application:remove-json --file "$file" || true
+    done
+fi
+
+#DEBHELPER#
+
+exit 0
