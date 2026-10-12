@@ -30,6 +30,8 @@ class TestHelpers(unittest.TestCase):
             env.write_text("A=1\n# comment\n\nB = two=2\n")
             self.assertEqual(ss.load_env_file(str(env)), {"A": "1", "B": "two=2"})
             self.assertEqual(ss.load_env_file(str(Path(tmp) / "missing")), {})
+            env.write_text("export A='quoted value'\nB=\"dq\"\nC='unterminated\n")
+            self.assertEqual(ss.load_env_file(str(env)), {"A": "quoted value", "B": "dq", "C": "'unterminated"})
 
     def test_build_scope_range(self):
         self.assertEqual(ss.build_scope("2025-09-01", "2025-09-15", None), "2025-09-01>2025-09-15")
@@ -37,6 +39,14 @@ class TestHelpers(unittest.TestCase):
     def test_build_scope_symbolic_and_default(self):
         self.assertEqual(ss.build_scope(None, None, "yesterday"), "yesterday")
         self.assertEqual(ss.build_scope(None, None, None), ss.DEFAULT_SCOPE)
+
+    def test_build_scope_rejects_non_iso_and_injection(self):
+        for bad in (("2025-9-1", "2025-9-15"), ("2025-09-01 ", "2025-09-15"), ("2025-13-01", "2025-13-02")):
+            with self.assertRaises(ValueError):
+                ss.build_scope(bad[0], bad[1], None)
+        for bad_scope in ("last_month>2020-01-01", "x;rm -rf", "../etc", "a" * 40):
+            with self.assertRaises(ValueError):
+                ss.build_scope(None, None, bad_scope)
 
     def test_build_scope_invalid(self):
         with self.assertRaises(ValueError):
@@ -52,6 +62,23 @@ class TestSecurity(unittest.TestCase):
         env = {"CSAS_ACCESS_TOKEN": "tok-123456", "POHODA_PASSWORD": "s3cr3tpw", "OTHER": "visible"}
         text = "Authorization: tok-123456 password=s3cr3tpw visible"
         self.assertEqual(ss.redact(text, env), "Authorization: *** password=*** visible")
+
+    def test_redact_covers_any_secret_looking_variable_and_json_escaping(self):
+        env = {"MY_SERVICE_TOKEN": 'a"b\\c-1234', "POHODA_PASSWORD": "pässw0rd!", "CSAS_ACCOUNT_IBAN": "CZ0000"}
+        text = json.dumps({"x": 'a"b\\c-1234', "y": "pässw0rd!", "iban": "CZ0000"}, ensure_ascii=True)
+        out = ss.redact(text, env)
+        self.assertNotIn("1234", out)
+        self.assertNotIn("sw0rd", out)
+        self.assertIn("CZ0000", out)
+
+    def test_run_sanitizes_values_from_env_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            envfile = Path(tmp) / ".env"
+            envfile.write_text("POHODA_PASSWORD=hunter2hunter2\n")
+            args = argparse.Namespace(from_date=None, to_date=None, scope=None, output_dir=tmp, env_file=str(envfile), output=None)
+            with patch("statement_sync.download_statements", return_value=(None, {"error": "login hunter2hunter2 failed"})):
+                code, report = ss.run(args)
+            self.assertNotIn("hunter2hunter2", json.dumps(report))
 
     def test_private_dir_is_created_with_mode_0700(self):
         with tempfile.TemporaryDirectory() as tmp:

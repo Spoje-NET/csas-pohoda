@@ -19,6 +19,7 @@ Exit codes: 0 success (also when there is nothing to import), 1 download failed,
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -47,29 +48,38 @@ def load_env_file(env_path: str = ".env") -> dict:
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
+                if line.startswith("export "):
+                    line = line[7:].lstrip()
                 if "=" in line:
                     key, value = line.split("=", 1)
-                    env_vars[key.strip()] = value.strip()
+                    value = value.strip()
+                    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                        value = value[1:-1]
+                    env_vars[key.strip()] = value
     return env_vars
 
 
-SECRET_VARIABLES = (
-    "CSAS_API_KEY",
-    "CSAS_ACCESS_TOKEN",
-    "POHODA_PASSWORD",
-    "POHODA_USERNAME",
-    "POHODA_URL",
-)
+SECRET_NAME = re.compile(r"(PASSWORD|PASSWD|TOKEN|SECRET|API_KEY|APIKEY|CREDENTIAL|^POHODA_USERNAME$|^POHODA_URL$)", re.I)
+
+
+def secret_values(env: Optional[Dict[str, str]] = None) -> List[str]:
+    """Values of all variables which look like secrets (longest first)."""
+    source = os.environ if env is None else env
+    values = {v for k, v in source.items() if v and len(v) >= 4 and SECRET_NAME.search(k)}
+    return sorted(values, key=len, reverse=True)
 
 
 def redact(text: str, env: Optional[Dict[str, str]] = None) -> str:
-    """Hide the values of secret variables in text which goes to logs and reports."""
-    source = os.environ if env is None else env
-    for name in SECRET_VARIABLES:
-        value = source.get(name)
-        if value and len(value) >= 4:
-            text = text.replace(value, "***")
+    """Hide the values of secret variables (also in JSON-escaped form) in text for logs and reports."""
+    for value in secret_values(env):
+        for variant in {value, json.dumps(value)[1:-1], json.dumps(value, ensure_ascii=False)[1:-1]}:
+            text = text.replace(variant, "***")
     return text
+
+
+def sanitize(report: dict, env: Optional[Dict[str, str]] = None) -> dict:
+    """Return the report with all secret values removed."""
+    return json.loads(redact(json.dumps(report, ensure_ascii=False), env))
 
 
 def ensure_private_dir(path: str) -> str:
@@ -89,8 +99,14 @@ def ensure_private_dir(path: str) -> str:
     return str(directory.resolve())
 
 
+DATE_RE = re.compile(r"^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$")
+SCOPE_RE = re.compile(r"^[A-Za-z_]{1,32}$")
+
+
 def parse_date(value: str) -> str:
-    """Validate a YYYY-MM-DD date and return it unchanged."""
+    """Validate a strict YYYY-MM-DD date (zero padded, as the PHP downloader expects) and return it unchanged."""
+    if not DATE_RE.match(value):
+        raise ValueError(f"Invalid date {value!r}, expected YYYY-MM-DD")
     datetime.strptime(value, "%Y-%m-%d")
     return value
 
@@ -100,6 +116,7 @@ def build_scope(from_date: Optional[str], to_date: Optional[str], scope: Optiona
     Build the period for the downloader.
 
     A date range wins over a symbolic scope; without both the default ``last_month`` is used.
+    Only a plain symbolic name or an ISO date range is ever passed on to the downloader.
     """
     if from_date or to_date:
         if not (from_date and to_date):
@@ -108,7 +125,11 @@ def build_scope(from_date: Optional[str], to_date: Optional[str], scope: Optiona
         if start > end:
             raise ValueError("FROM_DATE is after TO_DATE")
         return f"{start}>{end}"
-    return scope or DEFAULT_SCOPE
+    if scope:
+        if not SCOPE_RE.match(scope):
+            raise ValueError(f"Invalid scope {scope!r}")
+        return scope
+    return DEFAULT_SCOPE
 
 
 def download_statements(
@@ -195,10 +216,15 @@ def build_report(status: str, message: str, **artifacts) -> dict:
 
 
 def run(args: argparse.Namespace) -> Tuple[int, dict]:
-    """Download and import; return ``(exit code, report)``."""
+    """Download and import; return ``(exit code, report)`` with all secret values removed."""
     env = dict(os.environ)
     if args.env_file:
         env.update(load_env_file(args.env_file))
+    code, report = _run(args, env)
+    return code, sanitize(report, env)
+
+
+def _run(args: argparse.Namespace, env: Dict[str, str]) -> Tuple[int, dict]:
 
     try:
         scope = build_scope(
@@ -251,7 +277,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     code, report = run(args)
-    document = redact(json.dumps(report, indent=2, ensure_ascii=False))
+    document = json.dumps(report, indent=2, ensure_ascii=False)
     destination = args.output or os.environ.get("RESULT_FILE")
     if destination and destination not in ("-", "php://stdout"):
         Path(destination).write_text(document + "\n")
