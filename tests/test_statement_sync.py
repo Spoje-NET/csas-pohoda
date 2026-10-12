@@ -75,7 +75,7 @@ class TestSecurity(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             envfile = Path(tmp) / ".env"
             envfile.write_text("POHODA_PASSWORD=hunter2hunter2\n")
-            args = argparse.Namespace(from_date=None, to_date=None, scope=None, output_dir=tmp, env_file=str(envfile), output=None)
+            args = argparse.Namespace(from_date=None, to_date=None, scope=None, output_dir=tmp, env_file=str(envfile), output=None, file=None)
             with patch("statement_sync.download_statements", return_value=(None, {"error": "login hunter2hunter2 failed"})):
                 code, report = ss.run(args)
             self.assertNotIn("hunter2hunter2", json.dumps(report))
@@ -161,13 +161,15 @@ class TestImport(unittest.TestCase):
     @patch("statement_sync.subprocess.run")
     def test_import_reads_report(self, run):
         def fake(cmd, **kwargs):
-            Path(cmd[cmd.index("-o") + 1]).write_text(json.dumps({"status": "success", "message": "5 imported"}))
+            Path(next(c for c in cmd if c.startswith("-o"))[2:]).write_text(json.dumps({"status": "success", "message": "5 imported"}))
             return completed()
 
         run.side_effect = fake
         report, info = ss.import_statements(["/tmp/a.abo-standard"], {})
         self.assertEqual(report["status"], "success")
-        self.assertEqual(run.call_args[0][0][1], "/tmp/a.abo-standard")
+        cmd = run.call_args[0][0]
+        self.assertTrue(cmd[1].startswith("-o"), "options must precede files for PHP getopt")
+        self.assertEqual(cmd[2], "/tmp/a.abo-standard")
 
     @patch("statement_sync.subprocess.run")
     def test_import_without_report(self, run):
@@ -179,7 +181,7 @@ class TestImport(unittest.TestCase):
 
 class TestRun(unittest.TestCase):
     def args(self, **kw):
-        base = dict(from_date=None, to_date=None, scope=None, output_dir="/tmp/x", env_file=None, output=None)
+        base = dict(from_date=None, to_date=None, scope=None, output_dir="/tmp/x", env_file=None, output=None, file=None)
         base.update(kw)
         return argparse.Namespace(**base)
 
@@ -211,6 +213,21 @@ class TestRun(unittest.TestCase):
         code, report = ss.run(self.args())
         self.assertEqual(code, ss.EXIT_IMPORT_FAILED)
         self.assertEqual(report["message"], "bad")
+
+    @patch("statement_sync.import_statements", return_value=({"status": "success", "message": "ok"}, {"returncode": 0}))
+    @patch("statement_sync.download_statements")
+    def test_file_option_skips_download(self, dl, imp):
+        with tempfile.TemporaryDirectory() as tmp:
+            abo = Path(tmp) / "a.abo-standard"
+            abo.write_text("x")
+            code, report = ss.run(self.args(file=[str(abo)]))
+        dl.assert_not_called()
+        self.assertEqual(code, ss.EXIT_OK)
+        self.assertEqual(imp.call_args[0][0], [str(abo)])
+
+    def test_file_option_missing_file(self):
+        code, report = ss.run(self.args(file=["/nonexistent/a.abo-standard"]))
+        self.assertEqual(code, ss.EXIT_DOWNLOAD_FAILED)
 
     def test_invalid_dates(self):
         code, report = ss.run(self.args(from_date="2025-09-01"))

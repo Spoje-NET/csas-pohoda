@@ -150,7 +150,7 @@ def download_statements(
     run_dir = tempfile.mkdtemp(prefix="run-", dir=output_dir)
     run_env = dict(os.environ if env is None else env)
     run_env["CSAS_STATEMENT_SCOPE"] = scope
-    cmd = [DOWNLOADER, f"-d{run_dir}", f"-f{STATEMENT_FORMAT}", "-o", "php://stdout"]
+    cmd = [DOWNLOADER, f"-d{run_dir}", f"-f{STATEMENT_FORMAT}"]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, env=run_env)
     except OSError as exc:
@@ -179,7 +179,7 @@ def import_statements(files: List[str], env: Optional[Dict[str, str]] = None) ->
     run_env = dict(os.environ if env is None else env)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tf:
         report_path = tf.name
-    cmd = [IMPORTER, *files, "-o", report_path]
+    cmd = [IMPORTER, f"-o{report_path}", *files]
     info = {}
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, env=run_env)
@@ -236,7 +236,13 @@ def _run(args: argparse.Namespace, env: Dict[str, str]) -> Tuple[int, dict]:
         return EXIT_DOWNLOAD_FAILED, build_report("error", str(exc))
 
     output_dir = args.output_dir or env.get("OUTPUT_DIR") or DEFAULT_OUTPUT_DIR
-    files, download_info = download_statements(scope, output_dir, env)
+    if args.file:
+        files, download_info = [os.path.abspath(f) for f in args.file], {"skipped": "importing the given files"}
+        missing = [f for f in files if not os.path.isfile(f)]
+        if missing:
+            return EXIT_DOWNLOAD_FAILED, build_report("error", f"File not found: {missing[0]}")
+    else:
+        files, download_info = download_statements(scope, output_dir, env)
     if files is None:
         return EXIT_DOWNLOAD_FAILED, build_report(
             "error", "Failed to download statement(s) from CSAS.", downloader=download_info
@@ -271,6 +277,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--from-date", help="Start date YYYY-MM-DD (env FROM_DATE).")
     parser.add_argument("--to-date", help="End date YYYY-MM-DD (env TO_DATE).")
     parser.add_argument("--scope", help="Symbolic period, e.g. last_month, yesterday (env CSAS_STATEMENT_SCOPE).")
+    parser.add_argument("--file", action="append", help="Import this already downloaded ABO file instead of downloading (repeatable).")
     parser.add_argument("--output-dir", help=f"Directory for statements (env OUTPUT_DIR, default {DEFAULT_OUTPUT_DIR}).")
     parser.add_argument("-e", "--env-file", help="Optional .env file with the configuration.")
     parser.add_argument("-o", "--output", help="Write the JSON report to this file (env RESULT_FILE, default stdout).")

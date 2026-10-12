@@ -133,6 +133,16 @@
       "required": false,
       "category": "Other",
       "defval": "console|syslog"
+    },
+    "POHODA_BANK_CODE": {
+      "type": "string",
+      "description": {
+        "en": "Bank code of the account, 0800 for Česká spořitelna",
+        "cs": "Kód banky účtu, 0800 pro Českou spořitelnu"
+      },
+      "required": true,
+      "defval": "0800",
+      "category": "Other"
     }
   }
 }

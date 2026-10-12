@@ -32,7 +32,8 @@ All configuration comes from the environment (MultiFlexi credentials *Csas* and 
 | `CSAS_API_KEY`, `CSAS_ACCESS_TOKEN` | CSAS API access (the access token lives only 5 minutes, MultiFlexi renews it before every job) |
 | `CSAS_ACCOUNT_IBAN` or `CSAS_ACCOUNT_UUID` | the account to download |
 | `POHODA_URL`, `POHODA_USERNAME`, `POHODA_PASSWORD`, `POHODA_ICO` | Pohoda mServer |
-| `POHODA_BANK_IDS` | ID (abbreviation) of the bank account in Pohoda |
+| `POHODA_BANK_IDS` | ID (abbreviation) of the bank account in Pohoda, e.g. `CS` (must exist in Pohoda) |
+| `POHODA_BANK_CODE` | bank code of the account, `0800` for Česká spořitelna |
 | `FROM_DATE`, `TO_DATE` | period `YYYY-MM-DD` |
 | `CSAS_STATEMENT_SCOPE` | symbolic period when no dates are given (default `last_month`) |
 | `OUTPUT_DIR`, `RESULT_FILE` | where to save statements and the JSON report |
@@ -40,6 +41,7 @@ All configuration comes from the environment (MultiFlexi credentials *Csas* and 
 ```bash
 csas-pohoda --from-date 2025-09-01 --to-date 2025-09-30 -e /path/to/.env
 csas-pohoda --scope yesterday
+csas-pohoda --file statements/27_CZ84..._CZK_2025-08-21.abo-standard   # import without downloading
 ```
 
 The JSON report contains the downloaded files and the import report of `pohoda-abo-importer`.
