@@ -8,9 +8,9 @@ String[] distributions = [
 			// 'debian:forky', // Disabled: Forky is still unstable/research-only.
 			//                 // The full Debian package ecosystem is not yet available for Forky.
 			//                 // Re-enable once the stack builds cleanly for Forky.
-			'ubuntu:jammy',
+			// 'ubuntu:jammy', // multiflexi-csas (dependency of multiflexi-csas-pohoda) is not built for jammy
 			'ubuntu:noble',
-			'ubuntu:resolute',
+			// 'ubuntu:resolute', // multiflexi-csas is not published for resolute yet
 ]
 
 String vendor = 'vitexsoftware'
