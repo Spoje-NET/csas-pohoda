@@ -167,6 +167,11 @@ def download_statements(
         if p.is_file() and not p.is_symlink() and p.resolve().parent == Path(run_dir).resolve()
     )
     info["files"] = files
+    if not files:
+        try:
+            os.rmdir(run_dir)  # nothing downloaded, do not leave empty run directories behind
+        except OSError:
+            pass
     return files, info
 
 

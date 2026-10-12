@@ -140,6 +140,7 @@ class TestDownload(unittest.TestCase):
             run.return_value = completed(stdout="no statements returned\n")
             files, info = ss.download_statements("last_month", tmp, {})
             self.assertEqual(files, [])
+            self.assertFalse(Path(info["run_dir"]).exists(), "empty run directory is removed")
 
     @patch("statement_sync.subprocess.run")
     def test_download_failure(self, run):
