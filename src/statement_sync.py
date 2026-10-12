@@ -22,7 +22,6 @@ import os
 import subprocess
 import sys
 import tempfile
-import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -52,6 +51,42 @@ def load_env_file(env_path: str = ".env") -> dict:
                     key, value = line.split("=", 1)
                     env_vars[key.strip()] = value.strip()
     return env_vars
+
+
+SECRET_VARIABLES = (
+    "CSAS_API_KEY",
+    "CSAS_ACCESS_TOKEN",
+    "POHODA_PASSWORD",
+    "POHODA_USERNAME",
+    "POHODA_URL",
+)
+
+
+def redact(text: str, env: Optional[Dict[str, str]] = None) -> str:
+    """Hide the values of secret variables in text which goes to logs and reports."""
+    source = os.environ if env is None else env
+    for name in SECRET_VARIABLES:
+        value = source.get(name)
+        if value and len(value) >= 4:
+            text = text.replace(value, "***")
+    return text
+
+
+def ensure_private_dir(path: str) -> str:
+    """
+    Create the directory (mode 0700) or verify that an existing one is safe to use:
+    a real directory (no symlink) owned by the current user and not accessible by others.
+    """
+    directory = Path(path)
+    if directory.is_symlink():
+        raise OSError(f"{path} is a symbolic link")
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    info = directory.stat()
+    if not directory.is_dir() or info.st_uid != os.geteuid():
+        raise OSError(f"{path} is not a directory owned by the current user")
+    if info.st_mode & 0o077:
+        directory.chmod(0o700)
+    return str(directory.resolve())
 
 
 def parse_date(value: str) -> str:
@@ -85,25 +120,30 @@ def download_statements(
     Returns ``(files, info)``; ``files`` is None when the download failed and an empty list
     when the bank has no statement for the period.
     """
-    os.makedirs(output_dir, exist_ok=True)
-    started = time.time() - 2
+    try:
+        output_dir = ensure_private_dir(output_dir)
+    except OSError as exc:
+        return None, {"error": str(exc)}
+    # Every run gets its own private directory (mode 0700), so statements of other
+    # jobs/companies sharing OUTPUT_DIR can never be picked up and imported by mistake.
+    run_dir = tempfile.mkdtemp(prefix="run-", dir=output_dir)
     run_env = dict(os.environ if env is None else env)
     run_env["CSAS_STATEMENT_SCOPE"] = scope
-    cmd = [DOWNLOADER, f"-d{output_dir}", f"-f{STATEMENT_FORMAT}", "-o", "php://stdout"]
+    cmd = [DOWNLOADER, f"-d{run_dir}", f"-f{STATEMENT_FORMAT}", "-o", "php://stdout"]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, env=run_env)
     except OSError as exc:
         return None, {"error": f"Cannot run {DOWNLOADER}: {exc}"}
 
-    info = {"command": " ".join(cmd), "returncode": result.returncode, "scope": scope}
+    info = {"returncode": result.returncode, "scope": scope, "run_dir": run_dir}
     if result.returncode != 0:
-        info["error"] = (result.stderr or result.stdout or "downloader failed").strip()[-2000:]
+        info["error"] = redact((result.stderr or result.stdout or "downloader failed").strip()[-2000:], run_env)
         return None, info
 
     files = sorted(
-        str(p)
-        for p in Path(output_dir).glob(f"*.{STATEMENT_FORMAT}")
-        if p.stat().st_mtime >= started
+        str(p.resolve())
+        for p in Path(run_dir).glob(f"*.{STATEMENT_FORMAT}")
+        if p.is_file() and not p.is_symlink() and p.resolve().parent == Path(run_dir).resolve()
     )
     info["files"] = files
     return files, info
@@ -119,11 +159,11 @@ def import_statements(files: List[str], env: Optional[Dict[str, str]] = None) ->
     with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tf:
         report_path = tf.name
     cmd = [IMPORTER, *files, "-o", report_path]
-    info = {"command": " ".join(cmd)}
+    info = {}
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, env=run_env)
     except OSError as exc:
-        info["error"] = f"Cannot run {IMPORTER}: {exc}"
+        info["error"] = redact(f"Cannot run {IMPORTER}: {exc}", run_env)
         return None, info
 
     info["returncode"] = result.returncode
@@ -132,7 +172,7 @@ def import_statements(files: List[str], env: Optional[Dict[str, str]] = None) ->
         with open(report_path, "r") as f:
             report = json.load(f)
     except (OSError, ValueError):
-        info["error"] = (result.stderr or result.stdout or "importer produced no report").strip()[-2000:]
+        info["error"] = redact((result.stderr or result.stdout or "importer produced no report").strip()[-2000:], run_env)
     finally:
         try:
             os.unlink(report_path)
@@ -211,7 +251,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     code, report = run(args)
-    document = json.dumps(report, indent=2, ensure_ascii=False)
+    document = redact(json.dumps(report, indent=2, ensure_ascii=False))
     destination = args.output or os.environ.get("RESULT_FILE")
     if destination and destination not in ("-", "php://stdout"):
         Path(destination).write_text(document + "\n")

@@ -47,18 +47,64 @@ class TestHelpers(unittest.TestCase):
             ss.build_scope("01.09.2025", "15.09.2025", None)
 
 
+class TestSecurity(unittest.TestCase):
+    def test_redact_hides_secret_values(self):
+        env = {"CSAS_ACCESS_TOKEN": "tok-123456", "POHODA_PASSWORD": "s3cr3tpw", "OTHER": "visible"}
+        text = "Authorization: tok-123456 password=s3cr3tpw visible"
+        self.assertEqual(ss.redact(text, env), "Authorization: *** password=*** visible")
+
+    def test_private_dir_is_created_with_mode_0700(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = ss.ensure_private_dir(str(Path(tmp) / "a" / "b"))
+            self.assertEqual(oct(os.stat(path).st_mode & 0o777), "0o700")
+
+    def test_private_dir_rejects_symlink(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target"
+            target.mkdir()
+            link = Path(tmp) / "link"
+            link.symlink_to(target)
+            with self.assertRaises(OSError):
+                ss.ensure_private_dir(str(link))
+
+    def test_private_dir_tightens_open_permissions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "open"
+            d.mkdir(mode=0o777)
+            d.chmod(0o777)
+            ss.ensure_private_dir(str(d))
+            self.assertEqual(oct(os.stat(d).st_mode & 0o777), "0o700")
+
+    @patch("statement_sync.subprocess.run")
+    def test_error_text_is_redacted(self, run):
+        with tempfile.TemporaryDirectory() as tmp:
+            run.return_value = completed(returncode=1, stderr="bad token tok-123456")
+            files, info = ss.download_statements("last_month", tmp, {"CSAS_ACCESS_TOKEN": "tok-123456"})
+            self.assertNotIn("tok-123456", json.dumps(info))
+
+
 class TestDownload(unittest.TestCase):
     @patch("statement_sync.subprocess.run")
-    def test_download_lists_new_abo_files_and_sets_scope(self, run):
+    def test_download_uses_private_run_dir_and_sets_scope(self, run):
         with tempfile.TemporaryDirectory() as tmp:
-            (Path(tmp) / "1_acc_x_CZK_2025-09-01.abo-standard").write_text("data")
-            (Path(tmp) / "report.pdf").write_text("ignored")
-            run.return_value = completed()
+            foreign = Path(tmp) / "other-company.abo-standard"
+            foreign.write_text("must never be imported")
+
+            def fake(cmd, **kwargs):
+                run_dir = Path(cmd[1][2:])
+                (run_dir / "1_acc_x_CZK_2025-09-01.abo-standard").write_text("data")
+                (run_dir / "report.pdf").write_text("ignored")
+                return completed()
+
+            run.side_effect = fake
             files, info = ss.download_statements("2025-09-01>2025-09-15", tmp, {"PATH": "/usr/bin"})
             self.assertEqual([Path(f).name for f in files], ["1_acc_x_CZK_2025-09-01.abo-standard"])
+            self.assertNotIn(str(foreign), files)
             cmd = run.call_args[0][0]
             self.assertIn("-fabo-standard", cmd)
-            self.assertIn(f"-d{tmp}", cmd)
+            self.assertNotEqual(cmd[1], f"-d{tmp}")
+            self.assertTrue(cmd[1].startswith(f"-d{tmp}/run-"))
+            self.assertEqual(oct(os.stat(info["run_dir"]).st_mode & 0o777), "0o700")
             self.assertEqual(run.call_args[1]["env"]["CSAS_STATEMENT_SCOPE"], "2025-09-01>2025-09-15")
 
     @patch("statement_sync.subprocess.run")
