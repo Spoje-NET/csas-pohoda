@@ -15,7 +15,7 @@ Multi-Arch: foreign
 Depends:
  ${misc:Depends},
  python3,
- csas-statement-tools (>= 0.1.4),
+ csas-statement-tools (>= 0.1.3),
  pohoda-abo-importer (>= 1.0.1)
 Description: Import Česká spořitelna statements into Pohoda
  Downloads bank statements from Česká spořitelna (CSAS) in the ABO format
