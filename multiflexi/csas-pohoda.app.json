@@ -10,7 +10,7 @@
     "en": "Downloads bank statements from Česká spořitelna (CSAS) in ABO format and imports the bank movements into Pohoda via mServer.",
     "cs": "Stáhne bankovní výpisy z České spořitelny ve formátu ABO a naimportuje bankovní pohyby do Pohody přes mServer."
   },
-  "version": "#VERSION#",
+  "version": "0.2.0",
   "tags": [
     "banking",
     "accounting",
@@ -35,12 +35,12 @@
   },
   "produces": {
     "report": {
-      "type": "json",
       "description": {
         "en": "Result of the download and the import",
         "cs": "Výsledek stažení a importu"
       },
-      "schema": "https://raw.githubusercontent.com/VitexSoftware/php-vitexsoftware-multiflexi-core/refs/heads/main/multiflexi.report.schema.json"
+      "schema": "https://raw.githubusercontent.com/VitexSoftware/php-vitexsoftware-multiflexi-core/refs/heads/main/multiflexi.report.schema.json",
+      "format": "json"
     }
   },
   "environment": {
@@ -95,7 +95,7 @@
       "hint": "CS"
     },
     "POHODA_TIMEOUT": {
-      "type": "number",
+      "type": "integer",
       "description": {
         "en": "mServer connection timeout in seconds",
         "cs": "Timeout spojení s mServerem v sekundách"
