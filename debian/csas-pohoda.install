@@ -1,2 +1,2 @@
 bin/csas-pohoda usr/bin
-src/statement_sync.py usr/lib/csas-pohoda
+src/* usr/lib/csas-pohoda

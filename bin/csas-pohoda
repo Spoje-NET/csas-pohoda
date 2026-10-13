@@ -1,2 +1,2 @@
-#!/bin/sh
-exec python3 /usr/lib/csas-pohoda/statement_sync.py "$@"
+#!/bin/bash
+php -f /usr/lib/csas-pohoda/csas-pohoda.php -- "$@"

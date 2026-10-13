@@ -1,5 +1,5 @@
-__pycache__/
-*.pyc
+/vendor/
+/.phpunit.result.cache
 .env
 statements/
 debian/.debhelper/

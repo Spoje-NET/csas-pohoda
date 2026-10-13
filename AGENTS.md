@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-CSAS Statement to Pohoda Importer is a Python orchestration tool that automates downloading bank statements from Česká spořitelna (CSAS) and importing them into Pohoda accounting software. It acts as a bridge between two PHP-based tools:
+CSAS Statement to Pohoda Importer is a PHP orchestration tool that automates downloading bank statements from Česká spořitelna (CSAS) and importing them into Pohoda accounting software. It acts as a bridge between two PHP-based tools:
 
 - **csas-statement-tools**: Downloads bank statements from CSAS API
 - **pohoda-abo-importer**: Imports ABO format statements into Pohoda
@@ -13,23 +13,16 @@ CSAS Statement to Pohoda Importer is a Python orchestration tool that automates 
 
 ### Running the Main Script
 ```bash
-# Basic usage
-python src/statement_sync.py --from-date 2025-09-01 --to-date 2025-09-15 --pohoda-url http://localhost:8000 --pohoda-token YOUR_TOKEN
+# Basic usage (after composer install)
+php src/csas-pohoda.php --from-date 2025-09-01 --to-date 2025-09-15 -e .env
 
-# With custom output directory
-python src/statement_sync.py --from-date 2025-09-01 --to-date 2025-09-15 --output-dir /tmp/statements --pohoda-url http://localhost:8000 --pohoda-token YOUR_TOKEN
+# Import an already downloaded statement
+php src/csas-pohoda.php --file statements/a.abo-standard
 ```
 
 ### Testing
 ```bash
-# Run all tests
-python -m unittest discover tests
-
-# Run specific test file
-python -m unittest tests.test_statement_sync
-
-# Run tests with verbose output
-python -m unittest discover tests -v
+phpunit
 ```
 
 ### Token Management
@@ -57,7 +50,7 @@ make drun
 
 ### Core Components
 
-**`src/statement_sync.py`**: Main orchestration script that:
+**`src/CsasPohoda/StatementSync.php`**: Main orchestration script that:
 - Loads environment variables from `.env` file
 - Calls external PHP tools via subprocess
 - Processes JSON reports from both tools
@@ -88,8 +81,7 @@ make drun
 
 ### Testing Architecture
 
-Tests use unittest framework with mocking for external dependencies:
-- Mock `StatementDownloader` and `PohodaImporter` classes
+Tests use PHPUnit; `StatementSync::runProcess()` is overridden to script the external tools:
 - Test success and failure scenarios
 - Located in `tests/` directory
 
@@ -98,19 +90,21 @@ Tests use unittest framework with mocking for external dependencies:
 Based on `.github/copilot-instructions.md`:
 
 - **Language**: All code, comments, and messages in English
-- **Documentation**: Include docblocks for all functions and classes with parameters and return types
-- **Type Hints**: Always include type hints for function parameters and return types
+- **Documentation**: Include docblocks for all methods and classes with parameters and return types
+- **Type Hints**: `declare(strict_types=1)`, typed parameters and return types
 - **Error Handling**: Proper exception handling with meaningful error messages
 - **Security**: Never expose sensitive information in code
 - **Testing**: Create/update unit tests when adding/modifying classes
 - **Performance**: Consider optimization where necessary
-- **Compatibility**: Ensure compatibility with latest Python version
+- **Compatibility**: PHP 8.1+, Debian autoloader (`debian/autoload.php`), no Composer at runtime
 
 ## Key Files
 
-- `src/statement_sync.py`: Main application logic
-- `tests/test_statement_sync.py`: Unit tests
+- `src/csas-pohoda.php`: Command line entry point
+- `src/CsasPohoda/StatementSync.php`: Main application logic
+- `src/CsasPohoda/GraphSharePointClient.php`, `PohodaAttachments.php`: SharePoint upload (Graph) and link attachments (PohodaSQL)
+- `tests/CsasPohoda/StatementSyncTest.php`: Unit tests
 - `multiflexi/csas-pohoda.app.json`: MultiFlexi application configuration
 - `.env`: Environment variables (not in repo, created by `make token`)
 - `Makefile`: Build and utility commands
-- `.github/workflows/php.yml`: CI/CD pipeline (note: mentions PHP but project is Python)
+- `.github/workflows/php.yml`: CI/CD pipeline

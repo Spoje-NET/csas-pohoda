@@ -1,3 +1,15 @@
+csas-pohoda (0.3.0) unstable; urgency=medium
+
+  * Rewritten from Python back to PHP (Ease based, like pohoda-raiffeisenbank)
+  * The job always ends with a report, errors are logged to the console
+  * Report is declared as a MultiFlexi artifact
+  * Static debian/autoload.php, python3 dependency dropped
+  * Optional upload of the ABO and PDF statements to SharePoint (Microsoft Graph)
+    and attachment of the PDF link to the Pohoda bank records via Pohoda SQL
+    (exit codes 3 and 4)
+
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Tue, 13 Oct 2026 18:00:00 +0200
+
 csas-pohoda (0.2.0) unstable; urgency=medium
 
   * Rewritten statement_sync: configuration from the environment, date range

@@ -24,7 +24,7 @@ When writing code, always ensure that it is secure and does not expose any sensi
 
 When writing code, always consider performance and optimize where necessary.
 
-When writing code, always ensure that it is compatible with the latest version of Python and the libraries we are using.
+When writing code, always ensure that it is compatible with the latest version of PHP and the libraries we are using.
 
 When writing code, always ensure that it is well-tested and includes unit tests where applicable.
 

@@ -1,0 +1,45 @@
+{
+    "name": "spojenet/csas-pohoda",
+    "type": "project",
+    "description": "Download Ceska sporitelna statements and import them into Stormware Pohoda",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vítězslav Dvořák",
+            "email": "info@vitexsoftware.cz"
+        }
+    ],
+    "minimum-stability": "stable",
+    "bin": ["src/csas-pohoda.php"],
+    "require": {
+        "php": ">=8.1",
+        "ext-curl": "*",
+        "ext-posix": "*",
+        "spojenet/abo-parser": "*",
+        "spojenet/pohoda-sql": "^0.2.3",
+        "vgrem/php-spo": "^3.2.0",
+        "vitexsoftware/ease-core": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "SpojeNet\\CsasPohoda\\": "src/CsasPohoda/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Test\\SpojeNet\\CsasPohoda\\": "tests/CsasPohoda/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*",
+        "phpstan/phpstan": "*",
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "ergebnis/composer-normalize": "^2.48",
+        "ergebnis/php-cs-fixer-config": "^6.62"
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        }
+    }
+}

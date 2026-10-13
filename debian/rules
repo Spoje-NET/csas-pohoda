@@ -1,14 +1,20 @@
 #!/usr/bin/make -f
 
 PKG_VERSION := $(shell dpkg-parsechangelog -S Version | sed 's/~.*//')
+LIBDIR      := debian/csas-pohoda/usr/lib/csas-pohoda
 
 %:
 	dh $@
 
 override_dh_auto_test:
-	python3 -m unittest discover tests
+	phpunit --no-configuration --bootstrap tests/bootstrap.php tests
 
 override_dh_install:
 	dh_install
+	# Install the static autoloader
+	install -D -m 0644 debian/autoload.php $(LIBDIR)/autoload.php
+	sed -i "3a defined('APP_VERSION') || define('APP_VERSION', '$(PKG_VERSION)');" $(LIBDIR)/autoload.php
+	# Rewrite entry point to use the Debian autoloader
+	sed -i "s|require_once '../vendor/autoload.php';|require_once __DIR__.'/autoload.php';|" $(LIBDIR)/csas-pohoda.php
 	jq '.version = "$(PKG_VERSION)"' multiflexi/csas-pohoda.app.json \
 	    > debian/multiflexi-csas-pohoda/usr/lib/csas-pohoda/multiflexi/csas-pohoda.app.json

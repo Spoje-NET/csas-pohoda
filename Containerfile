@@ -1,6 +1,6 @@
 FROM debian:stable-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends python3 ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends php-cli ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # csas-statement-tools, pohoda-abo-importer and csas-pohoda come from the VitexSoftware repository

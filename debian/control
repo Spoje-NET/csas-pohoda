@@ -2,7 +2,7 @@ Source: csas-pohoda
 Section: utils
 Priority: optional
 Maintainer: Vítězslav Dvořák <info@vitexsoftware.cz>
-Build-Depends: debhelper-compat (= 13), jq
+Build-Depends: debhelper-compat (= 13), jq, php-cli, phpunit, php-vitexsoftware-ease-core
 Standards-Version: 4.7.0
 Homepage: https://github.com/Spoje-NET/csas-pohoda
 Rules-Requires-Root: no
@@ -14,7 +14,12 @@ Architecture: all
 Multi-Arch: foreign
 Depends:
  ${misc:Depends},
- python3,
+ php-cli,
+ php-curl,
+ php-vitexsoftware-ease-core,
+ php-spojenet-abo-parser,
+ php-spojenet-pohoda-sql (>= 0.2.3),
+ php-vgrem-php-spo,
  csas-statement-tools (>= 0.1.3),
  pohoda-abo-importer (>= 1.0.1)
 Description: Import Česká spořitelna statements into Pohoda

@@ -7,10 +7,10 @@
     "cs": "Import výpisů ČS do Pohody"
   },
   "description": {
-    "en": "Downloads bank statements from Česká spořitelna (CSAS) in ABO format and imports the bank movements into Pohoda via mServer.",
-    "cs": "Stáhne bankovní výpisy z České spořitelny ve formátu ABO a naimportuje bankovní pohyby do Pohody přes mServer."
+    "en": "Downloads bank statements from Česká spořitelna (CSAS) in ABO format and imports the bank movements into Pohoda via mServer. Optionally uploads the statements (ABO and PDF) to SharePoint and attaches the PDF link to the bank records in Pohoda.",
+    "cs": "Stáhne bankovní výpisy z České spořitelny ve formátu ABO a naimportuje bankovní pohyby do Pohody přes mServer. Volitelně nahraje výpisy (ABO a PDF) do SharePointu a připojí odkaz na PDF k bankovním záznamům v Pohodě."
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "tags": [
     "banking",
     "accounting",
@@ -154,6 +154,167 @@
       "required": true,
       "defval": "0800",
       "category": "Other"
+    },
+    "OFFICE365_TENANT": {
+      "type": "text",
+      "description": {
+        "en": "SharePoint tenant (Graph, Entra ID app-only); leave empty to skip SharePoint",
+        "cs": "Tenant SharePointu (Graph, Entra ID); prázdné = bez SharePointu"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": ""
+    },
+    "OFFICE365_SITE": {
+      "type": "text",
+      "description": {
+        "en": "SharePoint site",
+        "cs": "Site SharePointu"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": ""
+    },
+    "OFFICE365_CLIENTID": {
+      "type": "text",
+      "description": {
+        "en": "Entra ID application (client) ID",
+        "cs": "Client ID aplikace Entra ID"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": ""
+    },
+    "OFFICE365_CLSECRET": {
+      "type": "password",
+      "description": {
+        "en": "Entra ID client secret",
+        "cs": "Client Secret aplikace Entra ID"
+      },
+      "required": false,
+      "category": "Security",
+      "defval": ""
+    },
+    "OFFICE365_PATH": {
+      "type": "text",
+      "description": {
+        "en": "SharePoint folder for PDF statements",
+        "cs": "Složka SharePointu pro PDF výpisy"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": "",
+      "hint": "Shared Documents/Bank/PDF"
+    },
+    "OFFICE365_PATH_ABO": {
+      "type": "text",
+      "description": {
+        "en": "SharePoint folder for ABO statements, empty = same as OFFICE365_PATH",
+        "cs": "Složka SharePointu pro ABO výpisy, prázdné = jako OFFICE365_PATH"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": ""
+    },
+    "SHAREPOINT_PERMANENT_LINK": {
+      "type": "bool",
+      "description": {
+        "en": "Store a permanent sharing link instead of the path based URL",
+        "cs": "Ukládat trvalý sdílený odkaz místo URL závislé na cestě"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": true
+    },
+    "SHAREPOINT_LINK_TYPE": {
+      "type": "set",
+      "description": {
+        "en": "Type of the SharePoint sharing link",
+        "cs": "Typ sdíleného odkazu SharePoint"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": "view",
+      "options": {
+        "view": "View (read-only)",
+        "edit": "Edit"
+      }
+    },
+    "SHAREPOINT_LINK_SCOPE": {
+      "type": "set",
+      "description": {
+        "en": "Who the SharePoint sharing link works for",
+        "cs": "Pro koho sdílený odkaz platí"
+      },
+      "required": false,
+      "category": "Other",
+      "defval": "organization",
+      "options": {
+        "anonymous": "Anonymous",
+        "organization": "Organization",
+        "users": "Users"
+      }
+    },
+    "DB_CONNECTION": {
+      "type": "text",
+      "description": {
+        "en": "Pohoda SQL Server connection type",
+        "cs": "Typ připojení k SQL serveru Pohody"
+      },
+      "required": false,
+      "category": "Database",
+      "defval": "sqlsrv"
+    },
+    "DB_HOST": {
+      "type": "text",
+      "description": {
+        "en": "Pohoda SQL Server host; with SharePoint it enables attaching the statement links to bank records",
+        "cs": "Hostitel SQL serveru Pohody; spolu se SharePointem zapne přílohy odkazů u bankovních záznamů"
+      },
+      "required": false,
+      "category": "Database",
+      "defval": ""
+    },
+    "DB_PORT": {
+      "type": "integer",
+      "description": {
+        "en": "Pohoda SQL Server port",
+        "cs": "Port SQL serveru Pohody"
+      },
+      "required": false,
+      "category": "Database",
+      "defval": 1433
+    },
+    "DB_DATABASE": {
+      "type": "text",
+      "description": {
+        "en": "Pohoda database name",
+        "cs": "Název databáze Pohody"
+      },
+      "required": false,
+      "category": "Database",
+      "defval": "",
+      "hint": "StwPh_12345678_2026"
+    },
+    "DB_USERNAME": {
+      "type": "text",
+      "description": {
+        "en": "Database username",
+        "cs": "Uživatel databáze"
+      },
+      "required": false,
+      "category": "Database",
+      "defval": ""
+    },
+    "DB_PASSWORD": {
+      "type": "password",
+      "description": {
+        "en": "Database password",
+        "cs": "Heslo databáze"
+      },
+      "required": false,
+      "category": "Security",
+      "defval": ""
     }
   }
 }
