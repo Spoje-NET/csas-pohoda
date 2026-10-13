@@ -176,7 +176,10 @@ class StatementSync extends \Ease\Sand
         }
 
         if ((fileperms($path) & 0077) !== 0) {
+            // chmod() does not invalidate PHP's stat cache on all PHP versions,
+            // so later fileperms() calls could still see the old mode.
             chmod($path, 0700);
+            clearstatcache(true, $path);
         }
 
         return (string) realpath($path);

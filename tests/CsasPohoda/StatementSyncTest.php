@@ -180,6 +180,9 @@ final class StatementSyncTest extends TestCase
         $this->assertSame('last_month', StatementSync::buildScope('', null, null));
     }
 
+    /**
+     * @dataProvider invalidScopes
+     */
     #[DataProvider('invalidScopes')]
     public function testBuildScopeRejectsInvalid(?string $from, ?string $to, ?string $scope): void
     {
