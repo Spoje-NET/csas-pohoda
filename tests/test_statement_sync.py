@@ -241,5 +241,36 @@ class TestRun(unittest.TestCase):
         self.assertNotIn("s3cr3t", json.dumps(report))
 
 
+class TestMain(unittest.TestCase):
+    def test_unexpected_exception_still_writes_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "report.json"
+            with patch("statement_sync.run", side_effect=RuntimeError("boom")):
+                code = ss.main(["-o", str(out)])
+            report = json.loads(out.read_text())
+        self.assertEqual(code, ss.EXIT_DOWNLOAD_FAILED)
+        self.assertEqual(report["status"], "error")
+        self.assertIn("boom", report["message"])
+        self.assertIn("traceback", report["artifacts"])
+
+    def test_report_file_and_console_message(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "report.json"
+            with patch("statement_sync.download_statements", return_value=([], {"returncode": 0})):
+                with patch("sys.stderr") as err:
+                    code = ss.main(["-o", str(out)])
+            self.assertTrue(out.exists())
+        self.assertEqual(code, ss.EXIT_OK)
+        written = "".join(c.args[0] for c in err.write.call_args_list)
+        self.assertIn("success", written)
+
+    def test_unwritable_report_goes_to_stdout(self):
+        with patch("statement_sync.download_statements", return_value=([], {"returncode": 0})):
+            with patch("builtins.print") as pr:
+                code = ss.main(["-o", "/nonexistent-dir/report.json"])
+        self.assertEqual(code, ss.EXIT_DOWNLOAD_FAILED)
+        self.assertTrue(any('"status"' in str(c.args[0]) for c in pr.call_args_list))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -23,6 +23,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -288,13 +289,27 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("-o", "--output", help="Write the JSON report to this file (env RESULT_FILE, default stdout).")
     args = parser.parse_args(argv)
 
-    code, report = run(args)
+    try:
+        code, report = run(args)
+    except Exception as exc:  # the job must never end silently
+        env = dict(os.environ)
+        report = sanitize(build_report("error", f"Unexpected error: {type(exc).__name__}: {exc}"), env)
+        report["artifacts"]["traceback"] = redact(traceback.format_exc()[-4000:], env)
+        code = EXIT_DOWNLOAD_FAILED
     document = json.dumps(report, indent=2, ensure_ascii=False)
     destination = args.output or os.environ.get("RESULT_FILE")
     if destination and destination not in ("-", "php://stdout"):
-        Path(destination).write_text(document + "\n")
+        try:
+            Path(destination).write_text(document + "\n")
+        except OSError as exc:
+            print(f"Cannot write report to {destination}: {exc}", file=sys.stderr)
+            print(document)
+            code = code or EXIT_DOWNLOAD_FAILED
+        else:
+            print(f"Report written to {destination}", file=sys.stderr)
     else:
         print(document)
+    print(f"{report.get('status', 'unknown')}: {report.get('message', '')}", file=sys.stderr)
     return code
 
 

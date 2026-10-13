@@ -22,7 +22,7 @@
   "executable": "/usr/bin/csas-pohoda",
   "requirements": [
     "Csas",
-    "mserver"
+    "MServer"
   ],
   "events": {
     "emits": {
@@ -43,6 +43,17 @@
       "format": "json"
     }
   },
+  "artifacts": [
+    {
+      "name": "CSAS Pohoda Report",
+      "path": "${RESULT_FILE}",
+      "type": "json",
+      "description": {
+        "en": "JSON report of the statement download and import.",
+        "cs": "JSON report ze stažení a importu výpisů."
+      }
+    }
+  ],
   "environment": {
     "FROM_DATE": {
       "type": "string",
