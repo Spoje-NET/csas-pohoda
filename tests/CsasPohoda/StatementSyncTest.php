@@ -16,7 +16,6 @@ declare(strict_types=1);
 namespace Test\SpojeNet\CsasPohoda;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SpojeNet\CsasPohoda\GraphApiException;
 use SpojeNet\CsasPohoda\GraphSharePointClient;
@@ -180,22 +179,9 @@ final class StatementSyncTest extends TestCase
         $this->assertSame('last_month', StatementSync::buildScope('', null, null));
     }
 
-    /**
-     * @dataProvider invalidScopes
-     */
-    #[DataProvider('invalidScopes')]
-    public function testBuildScopeRejectsInvalid(?string $from, ?string $to, ?string $scope): void
+    public function testBuildScopeRejectsInvalid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        StatementSync::buildScope($from, $to, $scope);
-    }
-
-    /**
-     * @return array<string, array<int, ?string>>
-     */
-    public static function invalidScopes(): array
-    {
-        return [
+        $invalid = [
             'one date only' => ['2025-09-01', null, null],
             'reversed' => ['2025-09-15', '2025-09-01', null],
             'not zero padded' => ['2025-9-1', '2025-09-15', null],
@@ -203,6 +189,15 @@ final class StatementSyncTest extends TestCase
             'injection in date' => ['2025-09-01', "2025-09-15\n; rm", null],
             'injection in scope' => [null, null, 'last_month; rm -rf /'],
         ];
+
+        foreach ($invalid as $case => [$from, $to, $scope]) {
+            try {
+                StatementSync::buildScope($from, $to, $scope);
+                $this->fail('InvalidArgumentException expected: '.$case);
+            } catch (\InvalidArgumentException) {
+                $this->addToAssertionCount(1);
+            }
+        }
     }
 
     public function testRedactHidesSecretsAlsoJsonEscaped(): void
@@ -227,6 +222,7 @@ final class StatementSyncTest extends TestCase
     public function testPrivateDirIsCreatedWithMode0700(): void
     {
         $dir = StatementSync::ensurePrivateDir($this->tmp.'/a/b');
+        clearstatcache(true);
         $this->assertSame(0700, fileperms($dir) & 0777);
     }
 
@@ -242,6 +238,7 @@ final class StatementSyncTest extends TestCase
         mkdir($this->tmp.'/open', 0777);
         chmod($this->tmp.'/open', 0777);
         StatementSync::ensurePrivateDir($this->tmp.'/open');
+        clearstatcache(true);
         $this->assertSame(0700, fileperms($this->tmp.'/open') & 0777);
     }
 

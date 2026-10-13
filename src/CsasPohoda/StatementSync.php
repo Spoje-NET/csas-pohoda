@@ -169,6 +169,7 @@ class StatementSync extends \Ease\Sand
             throw new \RuntimeException('Cannot create '.$path);
         }
 
+        clearstatcache(true, $path);
         $owner = fileowner($path);
 
         if (!is_dir($path) || $owner !== posix_geteuid()) {
