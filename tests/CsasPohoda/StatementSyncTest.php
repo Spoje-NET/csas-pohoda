@@ -164,6 +164,11 @@ final class StatementSyncTest extends TestCase
         exec('rm -rf '.escapeshellarg($this->tmp));
     }
 
+    public function testObjectIsNamedForTheLog(): void
+    {
+        $this->assertSame('CsasPohoda', (new StatementSync())->getObjectName());
+    }
+
     public function testLoadEnvFile(): void
     {
         $file = $this->tmp.'/.env';

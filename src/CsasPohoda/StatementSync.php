@@ -55,6 +55,14 @@ class StatementSync extends \Ease\Sand
     private const SECRET_NAME = '/(PASSWORD|PASSWD|TOKEN|SECRET|API_KEY|APIKEY|CREDENTIAL|^POHODA_USERNAME$|^POHODA_URL$)/i';
 
     /**
+     * Name the object, so the log shows it instead of the inherited "Molecule".
+     */
+    public function __construct()
+    {
+        $this->setObjectName('CsasPohoda');
+    }
+
+    /**
      * Variables from a .env file (missing file means no variables).
      *
      * @return array<string, string>
