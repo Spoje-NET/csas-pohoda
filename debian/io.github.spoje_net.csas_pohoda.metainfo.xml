@@ -1,22 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component type="desktop-application">
+<component type="console-application">
   <id>io.github.spoje_net.csas_pohoda</id>
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
   <name>csas-pohoda</name>
   <summary>CSAS Statement to Pohoda Importer</summary>
+  <icon type="stock">csas-pohoda</icon>
   <description>
     <p>
-      Automates downloading bank statements from Česká spořitelna (CSAS) and imports them into Pohoda accounting software. Features:
+      Downloads bank statements from Česká spořitelna (CSAS) and imports the bank movements into the Pohoda accounting software through mServer. Features:
     </p>
+    <ul>
+      <li>Statements for a date range or a symbolic period such as last month</li>
+      <li>Idempotent import, already imported movements are skipped</li>
+      <li>Optional upload of the statements to SharePoint and attaching their links to the bank records in Pohoda</li>
+      <li>JSON report with a console log of every run</li>
+    </ul>
   </description>
   <categories>
     <category>Utility</category>
   </categories>
+  <provides>
+    <binary>csas-pohoda</binary>
+  </provides>
   <url type="homepage">https://github.com/Spoje-NET/csas-pohoda</url>
   <url type="bugtracker">https://github.com/Spoje-NET/csas-pohoda/issues</url>
   <developer id="io.github.spoje_net">
     <name>Spoje.Net</name>
   </developer>
+  <releases>
+    <release version="0.3.0" date="2026-10-14">
+      <description>
+        <p>Rewritten in PHP, optional SharePoint upload and links in Pohoda, report and console log of every run.</p>
+      </description>
+    </release>
+  </releases>
   <content_rating type="oars-1.1"/>
 </component>

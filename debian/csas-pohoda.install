@@ -1,2 +1,4 @@
 bin/csas-pohoda usr/bin
 src/* usr/lib/csas-pohoda
+csas-pohoda.svg usr/share/icons/hicolor/scalable/apps
+debian/io.github.spoje_net.csas_pohoda.metainfo.xml usr/share/metainfo

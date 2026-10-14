@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 PKG_VERSION := $(shell dpkg-parsechangelog -S Version | sed 's/~.*//')
+APP_UUID    := $(shell jq -r '.uuid' multiflexi/csas-pohoda.app.json)
 LIBDIR      := debian/csas-pohoda/usr/lib/csas-pohoda
 
 %:
@@ -18,3 +19,5 @@ override_dh_install:
 	sed -i "s|require_once '../vendor/autoload.php';|require_once __DIR__.'/autoload.php';|" $(LIBDIR)/csas-pohoda.php
 	jq '.version = "$(PKG_VERSION)"' multiflexi/csas-pohoda.app.json \
 	    > debian/multiflexi-csas-pohoda/usr/lib/csas-pohoda/multiflexi/csas-pohoda.app.json
+	# MultiFlexi shows the application image from the shared directory, named by the application uuid
+	install -D -m 0644 csas-pohoda.svg debian/multiflexi-csas-pohoda/usr/share/multiflexi/images/$(APP_UUID).svg
